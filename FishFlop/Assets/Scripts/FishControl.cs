@@ -4,26 +4,31 @@ using System.Collections;
 public class FishControl : MonoBehaviour {
 	
 	bool touchFish = false, grounded = false;
-	Vector3 startPos, endPos, currentTouch, moveDirection;
+	Vector3 startPos, mousePos, currentTouch, moveDirection;
+	public float sections, dropRate; //this is a float so I can divide
 	float dragDistance;
+	public LineRenderer aimArc;
 	public LayerMask playerLayer;
-	public ParticleSystem bubbles;
+	public GameObject box;
 	// Use this for initialization
 	void Start () 
 	{
 		print (Physics.gravity);
 		Physics.gravity = new Vector3(0,-40,0);
+		
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
-		MouseInput();//Also works on touch screens apparently
+		Movement();//Also works on touch screens apparently
 		DevControls();
 	}
 	
-	void MouseInput()
+	void Movement()
 	{
+		box.transform.position = transform.position;
+		box.transform.rotation = transform.rotation;
 		if(grounded)
 		{
 			if(Input.GetMouseButton(0))
@@ -32,7 +37,6 @@ public class FishControl : MonoBehaviour {
 				{
 					touchFish = true;
 					startPos = transform.position;
-					print (startPos);
 				}
 			}
 		}
@@ -40,47 +44,51 @@ public class FishControl : MonoBehaviour {
 		{
 			if(touchFish)	
 			{
-				//endPos = Input.mousePosition;
-				moveDirection = transform.position - currentTouch; //moveDirection = startPos - currentTouch;
 				moveDirection.x = Mathf.Clamp(moveDirection.x,-7,7);
 				moveDirection.y = Mathf.Clamp(moveDirection.y,-9,9);
-				rigidbody.AddForceAtPosition(moveDirection*200,endPos);
-				//rigidbody.AddForceAtPosition(moveDirection *100,currentTouch);
-				startPos = Vector3.zero;
+				rigidbody.AddForceAtPosition(moveDirection*200,mousePos);
 				touchFish = false;
-				print (moveDirection);
 			}
 		}
-	
 		if(touchFish)
 		{
-			endPos = Input.mousePosition;
-			endPos = new Vector3(endPos.x,endPos.y,startPos.z);
-			print (endPos);
-			currentTouch = new Vector3(Camera.main.ScreenPointToRay(Input.mousePosition).origin.x,Camera.main.ScreenPointToRay(Input.mousePosition).origin.y,startPos.z);
+			mousePos = Input.mousePosition;
+			mousePos.y = Mathf.Min( Screen.height , Mathf.Max(mousePos.y,0) );
+			mousePos.x = Mathf.Min( Screen.width , Mathf.Max(mousePos.x,0) );
+			currentTouch = new Vector3(Camera.main.ScreenPointToRay(mousePos).origin.x,Camera.main.ScreenPointToRay(mousePos).origin.y,startPos.z);
 			Debug.DrawLine(transform.position,currentTouch,Color.green);
-//			currentTouch = new Vector3(startPos.x - currentTouch.x,startPos.y - currentTouch.y,startPos.z);
-//			Debug.DrawLine(transform.position, currentTouch,Color.blue);
-			Debug.DrawLine(startPos,endPos,Color.red);
+			moveDirection = transform.position - currentTouch; //moveDirection = startPos - currentTouch;
+			DrawArc(moveDirection, currentTouch);
 		}
+		else aimArc.enabled = false;
 	}
 	
 	void DevControls()
 	{
-		if(Input.GetKey(KeyCode.R))
-			Application.LoadLevel(Application.loadedLevel);
+		if(Input.GetKey(KeyCode.R)) Application.LoadLevel(Application.loadedLevel);
 	}
 	
-	void DrawArc()
-	{
+	void DrawArc(Vector3 arcDirection, Vector3 touchPos)
+	{	
+		arcDirection.x = Mathf.Clamp(moveDirection.x,-15,15);
+		arcDirection.y = Mathf.Clamp(moveDirection.y,-7,20);
+		Vector3 arcStart;
 		
+		float t;
+		if(touchFish)
+		{
+			aimArc.enabled = true;
+			for(int i=0;i<sections;i++)
+			{
+
+				arcStart = transform.position;
+				arcStart.z = 0.8f;
+				t = i/(sections-1);
+				arcDirection.y -= dropRate*(Mathf.Abs(arcStart.y - touchPos.y)/12)*i;
+				aimArc.SetPosition(i,arcStart + arcDirection*t);
+			}
+		}	
 	}
-	
-	//Line position
-	//For each section of a line:
-		//Point = Start pos + direction*section/(totalnumberofsections -1)
-		//Point.y = Point.y - gravity
-		//SetPosition of point
 	
 	void OnCollisionStay()
 	{
