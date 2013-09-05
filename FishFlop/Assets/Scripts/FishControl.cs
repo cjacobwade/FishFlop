@@ -70,7 +70,7 @@ public class FishControl : MonoBehaviour {
 	
 	void DrawArc(Vector3 arcDirection, Vector3 touchPos)
 	{	
-		arcDirection.x = Mathf.Clamp(moveDirection.x,-15,15);
+		arcDirection.x = Mathf.Clamp(moveDirection.x,-23,23);
 		arcDirection.y = Mathf.Clamp(moveDirection.y,-7,20);
 		Vector3 arcStart;
 		
