@@ -31,7 +31,7 @@ public class FishControl : MonoBehaviour {
 		box.transform.rotation = transform.rotation;
 		if(grounded)
 		{
-			if(Input.GetMouseButton(0))
+			if(Input.GetMouseButtonDown(0))
 			{
 				if(Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition),1000,playerLayer))
 				{
@@ -58,6 +58,7 @@ public class FishControl : MonoBehaviour {
 			currentTouch = new Vector3(Camera.main.ScreenPointToRay(mousePos).origin.x,Camera.main.ScreenPointToRay(mousePos).origin.y,startPos.z);
 			Debug.DrawLine(transform.position,currentTouch,Color.green);
 			moveDirection = transform.position - currentTouch; //moveDirection = startPos - currentTouch;
+			moveDirection = Vector3.ClampMagnitude(moveDirection,15);
 			DrawArc(moveDirection, currentTouch);
 		}
 		else aimArc.enabled = false;
@@ -71,20 +72,21 @@ public class FishControl : MonoBehaviour {
 	void DrawArc(Vector3 arcDirection, Vector3 touchPos)
 	{	
 		arcDirection.x = Mathf.Clamp(moveDirection.x,-23,23);
-		arcDirection.y = Mathf.Clamp(moveDirection.y,-7,20);
+//		arcDirection.y = Mathf.Clamp(moveDirection.y,-7,20);
 		Vector3 arcStart;
-		
 		float t;
+		
 		if(touchFish)
 		{
+			arcStart = transform.position;
+			arcStart.z = 0.8f;
 			aimArc.enabled = true;
 			for(int i=0;i<sections;i++)
 			{
-
-				arcStart = transform.position;
-				arcStart.z = 0.8f;
+				
 				t = i/(sections-1);
-				arcDirection.y -= dropRate*(Mathf.Abs(arcStart.y - touchPos.y)/12)*i;
+				//variable = (condition) ? outcome1 : outcome2
+				arcDirection.y = arcDirection.y > -4 ? arcDirection.y -= dropRate*(Mathf.Abs(arcStart.y - touchPos.y)/25)*i : arcDirection.y = -4;
 				aimArc.SetPosition(i,arcStart + arcDirection*t);
 			}
 		}	
